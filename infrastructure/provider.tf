@@ -1,0 +1,17 @@
+
+
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "6.7.0"
+    }
+  }
+}
+
+provider "aws" {
+  # Configuration options
+  profile = "default"
+  region = "ap-south-1"
+}
+
