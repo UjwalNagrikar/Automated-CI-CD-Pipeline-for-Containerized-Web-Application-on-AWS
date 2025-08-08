@@ -19,15 +19,11 @@ variable "environment" {
 variable "container_port" {
   description = "Port exposed by the container"
   type        = number
-  default     = 5000
+  default     = 80
 }
 
 variable "app_count" {
   description = "Number of app instances"
   type        = number
-  default     = 2
-}
-variable "private_subnets" {
-  type        = list(string)
-  description = "List of private subnet IDs to associate with the ECS service"
+  default     = 1
 }

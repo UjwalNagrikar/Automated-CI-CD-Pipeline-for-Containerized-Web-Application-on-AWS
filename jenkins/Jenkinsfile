@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    environment {
+        ECR_REPO = 'http://442042536659.dkr.ecr.ap-south-1.amazonaws.com/cicd-demo'
+        IMAGE_TAG = "v1.${BUILD_NUMBER}"
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git url: 'https://github.com/UjwalNagrikar/Automated-CI-CD-Pipeline-for-Containerized-Web-Application-on-AWS.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $ECR_REPO:$IMAGE_TAG .'
+            }
+        }
+        stage('Login to ECR') {
+            steps {
+                sh 'aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REPO'
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                sh 'docker push $ECR_REPO:$IMAGE_TAG'
+            }
+        }
+        stage('Deploy to ECS') {
+            steps {
+                sh '''
+                aws ecs update-service --cluster your-cluster \
+                    --service your-service \
+                    --force-new-deployment
+                '''
+            }
+        }
+    }
+}

@@ -17,13 +17,3 @@ output "ecs_service_name" {
   description = "Name of the ECS service"
   value       = aws_ecs_service.app.name
 }
-
-output "load_balancer_dns" {
-  description = "DNS name of the load balancer"
-  value       = aws_lb.main.dns_name
-}
-
-output "application_url" {
-  description = "URL of the deployed application"
-  value       = "http://${aws_lb.main.dns_name}"
-}
