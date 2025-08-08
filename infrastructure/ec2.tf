@@ -69,41 +69,55 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Security Group for EC2
+resource "aws_security_group" "ec2_sg" {
+  name_prefix = "${var.project_name}-ec2-"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow all inbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "my_server" {
-  ami                    = "ami-0f58b397bc5c1f2e8"  # Updated Ubuntu 22.04 LTS for ap-south-1
-  key_name              = "Ujwal-SRE"
-  subnet_id             = aws_subnet.public[0].id
-  instance_type         = "t2.medium"  # Fixed typo: was "t2.midium"
-  vpc_security_group_ids = [aws_security_group.ec2_sg.id]  # Create separate SG
-  
+  ami                    = "ami-0f58b397bc5c1f2e8" # Ubuntu 22.04 LTS (ap-south-1)
+  key_name               = "Ujwal-SRE"
+  subnet_id              = aws_subnet.public[0].id
+  instance_type          = "t2.medium"
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+
   tags = {
     Name = "${var.project_name}-server"
   }
 
   user_data = <<-EOF
-    #!/bin/bash
-    #!/bin/bash
-
-set -e
+#!/bin/bash
 
 # Update system
 echo "[+] Updating system..."
 sudo apt update && sudo apt upgrade -y
 
-# Install Java (required for Jenkins)
+# Install Java
 echo "[+] Installing Java..."
 sudo apt install openjdk-11-jdk -y
 
 # Install Jenkins
 echo "[+] Installing Jenkins..."
-wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee \
-  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-  https://pkg.jenkins.io/debian binary/" | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-
+wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 sudo apt update
 sudo apt install jenkins -y
 sudo systemctl enable jenkins
@@ -113,11 +127,7 @@ sudo systemctl start jenkins
 echo "[+] Installing Docker..."
 sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) stable"
-
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt update
 sudo apt install docker-ce -y
 sudo systemctl enable docker
@@ -132,31 +142,5 @@ echo "[+] Installing AWS CLI..."
 sudo apt install awscli -y
 
 echo "✅ Jenkins, Docker, Java, and AWS CLI installation complete!"
-echo "👉 Access Jenkins at: http://<your-server-ip>:8080"
-
-  EOF
-}
-
-# Security Group for EC2
-resource "aws_security_group" "ec2_sg" {
-  name_prefix = "${var.project_name}-ec2-"
-  vpc_id      = aws_vpc.main.id
-
-  # Allow all inbound traffic
-  ingress {
-    description = "Allow all inbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Allow all outbound traffic
-  egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+EOF
 }
